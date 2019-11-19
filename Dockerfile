@@ -17,6 +17,10 @@ RUN cd /tmp && \
         cd Mad-Assembler && \
         fpc -Mdelphi -v -O3 mads.pas && \
         cp mads /bin/
+RUN cd /tmp && \
+        git clone github.com/astroforgit/maddocker.git && \
+        cd maddocker && \
+        cp script.sh /tmp/script.sh
 
 COPY ./script.sh /
 RUN chmod +x /script.sh
