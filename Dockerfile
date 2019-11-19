@@ -20,9 +20,8 @@ RUN cd /tmp && \
 RUN cd /tmp && \
         git clone https://github.com/astroforgit/maddocker.git && \
         cd maddocker && \
-        cp script.sh /tmp/script.sh
+        cp script.sh /script.sh
 
-COPY ./script.sh /
 RUN chmod +x /script.sh
 
-ENTRYPOINT ["/tmp/script.sh"]
+ENTRYPOINT ["/script.sh"]
