@@ -18,7 +18,7 @@ RUN cd /tmp && \
         fpc -Mdelphi -v -O3 mads.pas && \
         cp mads /bin/
 RUN cd /tmp && \
-        git clone github.com/astroforgit/maddocker.git && \
+        git clone https://github.com/astroforgit/maddocker.git && \
         cd maddocker && \
         cp script.sh /tmp/script.sh
 
