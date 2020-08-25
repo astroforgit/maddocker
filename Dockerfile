@@ -1,4 +1,4 @@
-FROM ubuntu:latest
+FROM alpine:3.7
 ENV TZ=Europe/Warsaw
 RUN apt-get -y update && \
 	apt-get -y upgrade && \
