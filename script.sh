@@ -1,4 +1,5 @@
 #!/bin/bash
+  if ![ -z "$1" ] tail -f /dev/null
   set -x
   cd /tmp
   export PATH="/madPascal:$PATH"
