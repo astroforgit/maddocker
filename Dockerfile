@@ -1,4 +1,4 @@
-FROM alpine:3.7
+FROM dokken/ubuntu-18.04
 ENV TZ=Europe/Warsaw
 RUN apt-get -y update && \
 	apt-get -y upgrade && \
