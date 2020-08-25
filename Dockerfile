@@ -1,4 +1,5 @@
 FROM dokken/ubuntu-18.04
+CMD tail -f /dev/null
 ENV TZ=Europe/Warsaw
 RUN apt-get -y update && \
 	apt-get -y upgrade && \
