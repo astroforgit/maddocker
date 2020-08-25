@@ -1,5 +1,5 @@
 #!/bin/bash
-  if ![ -z "$1" ] tail -f /dev/null
+  if [ -z "$2" ] eval $2
   set -x
   cd /tmp
   export PATH="/madPascal:$PATH"
