@@ -1,5 +1,5 @@
 FROM ubuntu:latest
-
+ENV TZ=Europe/Warsaw
 RUN apt-get -y update && \
 	apt-get -y upgrade && \
 	apt-get -y install  fpc-3.0.4
