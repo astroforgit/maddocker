@@ -13,7 +13,7 @@ RUN cd /tmp && \
     cp mp /bin/ && \
     cp -r ../Mad-Pascal /madPascal && \
     cp -r ./lib /paslib && \
-    ln -s ../blibs/*.pas /paslib
+    ln -s ../blibs/*.pas /paslib && \
     ln -s ../blibs/*.pas /madPascal
 
 RUN cd /tmp && \
