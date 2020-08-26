@@ -14,7 +14,7 @@ RUN cd /tmp && \
     cp -r ../Mad-Pascal /madPascal && \
     cp -r ./lib /paslib && \
     ln -s ../blibs/*.pas /paslib
-    ln -s ../blibs/*.pas /madPascal/
+    ln -s ../blibs/*.pas /madPascal
 
 RUN cd /tmp && \
         git clone https://github.com/tebe6502/Mad-Assembler.git && \
