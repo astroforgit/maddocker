@@ -12,7 +12,7 @@ RUN cd /tmp && \
     fpc -Mdelphi -v -O3 mp.pas && \
     cp mp /bin/ && \
     cp -r ../Mad-Pascal /madPascal && \
-    cp -r ./lib /paslib && 
+    cp -r ./lib /paslib && \
     cp -r ../blibs/*.pas /paslib && \
     cp -r ../blibs/*.pas /madPascal 
 RUN cd /tmp && \
