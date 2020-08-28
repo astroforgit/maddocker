@@ -12,10 +12,9 @@ RUN cd /tmp && \
     fpc -Mdelphi -v -O3 mp.pas && \
     cp mp /bin/ && \
     cp -r ../Mad-Pascal /madPascal && \
-    cp -r ./lib /paslib && \
-    ln -s ../blibs/*.pas /paslib && \
-    ln -s ../blibs/*.pas /madPascal
-
+    cp -r ./lib /paslib && 
+    cp -r ../blibs/*.pas /paslib && \
+    cp -r ../blibs/*.pas /madPascal 
 RUN cd /tmp && \
         git clone https://github.com/tebe6502/Mad-Assembler.git && \
         cd Mad-Assembler && \
