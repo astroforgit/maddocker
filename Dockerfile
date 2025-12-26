@@ -1,30 +1,58 @@
-FROM dokken/ubuntu-18.04
- 
-ENV TZ=Europe/Warsaw
-RUN apt-get -y update && \
-	apt-get -y upgrade && \
-	apt-get -y install  fpc-3.0.4
-RUN apt-get -y install  git
-RUN cd /tmp && \
-    git clone https://github.com/tebe6502/Mad-Pascal && \
-    git clone https://gitlab.com/bocianu/blibs && \
-    cd Mad-Pascal && \
-    fpc -Mdelphi -v -O3 mp.pas && \
-    cp mp /bin/ && \
-    cp -r ../Mad-Pascal /madPascal && \
-    cp -r ./lib /paslib && \
-    cp -r ../blibs/*.pas /paslib && \
-    cp -r ../blibs/*.pas /madPascal 
-RUN cd /tmp && \
-        git clone https://github.com/tebe6502/Mad-Assembler.git && \
-        cd Mad-Assembler && \
-        fpc -Mdelphi -v -O3 mads.pas && \
-        cp mads /bin/
-RUN cd /tmp && \
-        git clone https://github.com/astroforgit/maddocker.git && \
-        cd maddocker && \
-        cp script.sh /script.sh
+# ==========================================
+# STAGE 1: Builder (Compiles tools from source)
+# ==========================================
+FROM alpine:latest AS builder
 
+# Install build dependencies (Free Pascal and Git)
+RUN apk add --no-cache fpc git
+
+WORKDIR /build
+
+# 1. Build Mad Assembler (MADS)
+RUN git clone https://github.com/tebe6502/Mad-Assembler.git && \
+    cd Mad-Assembler && \
+    fpc -Mdelphi -v -O3 mads.pas && \
+    mkdir -p /dist/bin && \
+    mv mads /dist/bin/
+
+# 2. Build Mad Pascal (MP)
+RUN git clone https://github.com/tebe6502/Mad-Pascal.git && \
+    cd Mad-Pascal/src && \
+    fpc -Mdelphi -v -O3 mp.pas && \
+    mv mp /dist/bin/ && \
+    # Organize libraries for the final image
+    mkdir -p /dist/opt/MadPascal && \
+    cp -r ../base /dist/opt/MadPascal/ && \
+    cp -r ../lib /dist/opt/MadPascal/
+
+# 3. Add Blibs (Libraries)
+RUN git clone https://gitlab.com/bocianu/blibs.git && \
+    cp -r blibs/*.pas /dist/opt/MadPascal/lib/
+
+# ==========================================
+# STAGE 2: Final Runtime Image (Small Size)
+# ==========================================
+FROM alpine:latest
+
+# Install Bash (required for script.sh)
+RUN apk add --no-cache bash
+
+# Copy executables (mp, mads) to system bin
+COPY --from=builder /dist/bin/mp /usr/bin/mp
+COPY --from=builder /dist/bin/mads /usr/bin/mads
+
+# Copy libraries
+COPY --from=builder /dist/opt/MadPascal /opt/MadPascal
+
+# Set Environment Variables
+ENV MP_DIR="/opt/MadPascal"
+ENV PATH="$MP_DIR:$PATH"
+
+# Setup the runner script
+COPY script.sh /script.sh
 RUN chmod +x /script.sh
+
+# Set working directory to match the -v mount
+WORKDIR /code
 
 ENTRYPOINT ["/script.sh"]
