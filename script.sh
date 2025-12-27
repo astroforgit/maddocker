@@ -19,12 +19,13 @@ fi
 echo "--- Compiling ${FILE_NAME}.pas ---"
 
 # 1. Run Mad Pascal
+# REMOVED: "-o" flag (It was causing the syntax error)
+# MP automatically creates ${FILE_NAME}.a65
 mp "${FILE_NAME}.pas" \
    -ipath:/code \
    -ipath:/opt/MadPascal/base \
    -ipath:/opt/MadPascal/lib \
-   -ipath:/opt/MadPascal/blibs \
-   -o
+   -ipath:/opt/MadPascal/blibs
 
 # 2. Run Mad Assembler
 mads "${FILE_NAME}.a65" \
