@@ -5,7 +5,6 @@ FROM debian:stable-slim AS builder
 ENV DEBIAN_FRONTEND=noninteractive
 
 # Install dependencies
-# We include wget and ca-certificates to download the release securely
 RUN apt-get update && apt-get install -y fpc git wget ca-certificates && rm -rf /var/lib/apt/lists/*
 WORKDIR /build
 
@@ -15,12 +14,10 @@ RUN git clone https://github.com/tebe6502/Mad-Assembler.git && \
     mkdir -p /dist/bin && mv mads /dist/bin/
 
 # 2. Mad Pascal (STABLE v1.7.5 via Download)
-# We create the folder 'Mad-Pascal' first, then extract the tarball into it,
-# stripping the top folder (Mad-Pascal-1.7.5) so we don't have to guess names.
-RUN mkdir Mad-Pascal && \
-    wget https://github.com/tebe6502/Mad-Pascal/archive/refs/tags/v1.7.5.tar.gz -O mp.tar.gz && \
-    tar -xzf mp.tar.gz -C Mad-Pascal --strip-components=1 && \
-    cd Mad-Pascal/src && \
+# We extract simply. It creates directory: Mad-Pascal-1.7.5
+RUN wget https://github.com/tebe6502/Mad-Pascal/archive/refs/tags/v1.7.5.tar.gz -O mp.tar.gz && \
+    tar -xzf mp.tar.gz && \
+    cd Mad-Pascal-1.7.5/src && \
     fpc -Mdelphi -v -O3 mp.pas && \
     mv mp /dist/bin/ && \
     mkdir -p /dist/opt/MadPascal && \
