@@ -5,7 +5,7 @@ FILE_NAME=$1
 MODE=$2
 
 if [ -z "$FILE_NAME" ] || [ "$MODE" == "0" ]; then
-    echo "--- Container is running in interactive mode ---"
+    echo "--- Interactive Mode ---"
     exec tail -f /dev/null
 fi
 
@@ -27,7 +27,7 @@ mp "${FILE_NAME}.pas" \
    -o
 
 # 2. Run Mad Assembler
-# CHANGE: Added -i:/opt/MadPascal/blibs so MADS can find included .asm files
+# Note: Added -i for blibs so MADS can find included .asm files
 mads "${FILE_NAME}.a65" \
      -x \
      -i:/opt/MadPascal/base \
