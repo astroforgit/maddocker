@@ -4,7 +4,6 @@ set -e
 FILE_NAME=$1
 MODE=$2
 
-# Interactive Mode Check
 if [ -z "$FILE_NAME" ] || [ "$MODE" == "0" ]; then
     echo "--- Container is running in interactive mode ---"
     exec tail -f /dev/null
@@ -20,7 +19,6 @@ fi
 echo "--- Compiling ${FILE_NAME}.pas ---"
 
 # 1. Run Mad Pascal
-# Note: The Dockerfile now ensures casing doesn't matter for these libraries
 mp "${FILE_NAME}.pas" \
    -ipath:/code \
    -ipath:/opt/MadPascal/base \
@@ -29,7 +27,12 @@ mp "${FILE_NAME}.pas" \
    -o
 
 # 2. Run Mad Assembler
-mads "${FILE_NAME}.a65" -x -i:/opt/MadPascal/base -o:"${FILE_NAME}.xex"
+# CHANGE: Added -i:/opt/MadPascal/blibs so MADS can find included .asm files
+mads "${FILE_NAME}.a65" \
+     -x \
+     -i:/opt/MadPascal/base \
+     -i:/opt/MadPascal/blibs \
+     -o:"${FILE_NAME}.xex"
 
 echo "--- Build Successful: ${FILE_NAME}.xex ---"
 ls -l "${FILE_NAME}.xex"
