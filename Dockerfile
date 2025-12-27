@@ -8,14 +8,18 @@ ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get install -y fpc git ca-certificates && rm -rf /var/lib/apt/lists/*
 WORKDIR /build
 
-# 1. Mad Assembler
+# 1. Mad Assembler (MADS)
 RUN git clone https://github.com/tebe6502/Mad-Assembler.git && \
     cd Mad-Assembler && fpc -Mdelphi -v -O3 mads.pas && \
     mkdir -p /dist/bin && mv mads /dist/bin/
 
-# 2. Mad Pascal (Using Git Clone for reliability)
+# 2. Mad Pascal (STABLE v1.7.5)
+# We clone the repo, then checkout the specific tag to fix the @BUF errors
 RUN git clone https://github.com/tebe6502/Mad-Pascal.git && \
-    cd Mad-Pascal/src && fpc -Mdelphi -v -O3 mp.pas && \
+    cd Mad-Pascal && \
+    git checkout v1.7.5 && \
+    cd src && \
+    fpc -Mdelphi -v -O3 mp.pas && \
     mv mp /dist/bin/ && \
     mkdir -p /dist/opt/MadPascal && \
     cp -r ../base /dist/opt/MadPascal/ && \
@@ -24,7 +28,6 @@ RUN git clone https://github.com/tebe6502/Mad-Pascal.git && \
 # 3. Blibs
 RUN git clone https://gitlab.com/bocianu/blibs.git && \
     mkdir -p /dist/opt/MadPascal/blibs && \
-    # Robust copy: handles nesting if present
     cp -r blibs/blibs/* /dist/opt/MadPascal/blibs/ 2>/dev/null || cp -r blibs/* /dist/opt/MadPascal/blibs/
 
 # ==========================================
@@ -32,7 +35,7 @@ RUN git clone https://gitlab.com/bocianu/blibs.git && \
 # ==========================================
 FROM debian:stable-slim
 
-# Install bash + tools to rename files
+# Install tools
 RUN apt-get update && apt-get install -y --no-install-recommends bash findutils coreutils && rm -rf /var/lib/apt/lists/*
 
 COPY --from=builder /dist/bin/mp /usr/bin/mp
@@ -42,14 +45,26 @@ COPY --from=builder /dist/opt/MadPascal /opt/MadPascal
 ENV MP_DIR="/opt/MadPascal"
 ENV PATH="$MP_DIR:$PATH"
 
-# --- THE FIX: NUCLEAR LOWERCASE CONVERSION ---
-# This renames EVERY library file (System.a65 -> system.a65, AtArI.PaS -> atari.pas)
-# This fixes the missing @BUF error because MADS can finally find the system files.
-RUN find /opt/MadPascal -depth -type f -name "*[A-Z]*" | while read f; do \
+# --- THE FIX: SYMLINKS FOR CASE SENSITIVITY ---
+# We keep the files as they are (Mixed case) but create Lowercase AND Uppercase links.
+RUN find /opt/MadPascal -type f -name "*.*" | while read f; do \
       dir=$(dirname "$f"); \
       base=$(basename "$f"); \
+      ext="${base##*.}"; \
+      name="${base%.*}"; \
+      \
+      # 1. Link Lowercase (system.a65) \
       lower=$(echo "$base" | tr '[:upper:]' '[:lower:]'); \
-      mv "$f" "$dir/$lower"; \
+      if [ "$base" != "$lower" ]; then ln -fs "$base" "$dir/$lower"; fi; \
+      \
+      # 2. Link Uppercase (B_CRT.PAS) \
+      upper=$(echo "$base" | tr '[:lower:]' '[:upper:]'); \
+      if [ "$base" != "$upper" ]; then ln -fs "$base" "$dir/$upper"; fi; \
+      \
+      # 3. Link UpperName.ext (B_CRT.pas) \
+      upper_name=$(echo "$name" | tr '[:lower:]' '[:upper:]'); \
+      mixed="$upper_name.$ext"; \
+      if [ "$base" != "$mixed" ]; then ln -fs "$base" "$dir/$mixed"; fi; \
     done
 
 COPY script.sh /script.sh
