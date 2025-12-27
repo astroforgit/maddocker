@@ -39,7 +39,7 @@ RUN git clone https://gitlab.com/bocianu/blibs.git && \
 # ==========================================
 FROM debian:stable-slim
 
-# Install minimal dependencies (if any needed for the script)
+# Install bash for script execution
 RUN apt-get update && \
     apt-get install -y --no-install-recommends bash && \
     rm -rf /var/lib/apt/lists/*
