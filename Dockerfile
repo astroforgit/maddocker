@@ -1,4 +1,6 @@
+# ==========================================
 # STAGE 1: Builder
+# ==========================================
 FROM debian:stable-slim AS builder
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -19,14 +21,18 @@ RUN git clone https://github.com/tebe6502/Mad-Pascal.git && \
     cp -r ../base /dist/opt/MadPascal/ && \
     cp -r ../lib /dist/opt/MadPascal/
 
-# 3. Blibs (FIXED COPY COMMAND)
+# 3. Blibs (Robust Copy)
 RUN git clone https://gitlab.com/bocianu/blibs.git && \
-    # We copy the whole folder to ensure no files are missed
-    cp -r blibs /dist/opt/MadPascal/
+    mkdir -p /dist/opt/MadPascal/blibs && \
+    # Try copying from nested folder first, fall back to root
+    cp -r blibs/blibs/* /dist/opt/MadPascal/blibs/ 2>/dev/null || cp -r blibs/* /dist/opt/MadPascal/blibs/
 
+# ==========================================
 # STAGE 2: Runtime
+# ==========================================
 FROM debian:stable-slim
-RUN apt-get update && apt-get install -y --no-install-recommends bash && rm -rf /var/lib/apt/lists/*
+# Install standard tools
+RUN apt-get update && apt-get install -y --no-install-recommends bash findutils coreutils && rm -rf /var/lib/apt/lists/*
 
 COPY --from=builder /dist/bin/mp /usr/bin/mp
 COPY --from=builder /dist/bin/mads /usr/bin/mads
@@ -34,6 +40,16 @@ COPY --from=builder /dist/opt/MadPascal /opt/MadPascal
 
 ENV MP_DIR="/opt/MadPascal"
 ENV PATH="$MP_DIR:$PATH"
+
+# --- THE FIX: CREATE UPPERCASE SYMLINKS ---
+# This ensures 'uses ATARI' finds 'atari.pas'
+RUN find /opt/MadPascal -name "*.pas" | while read f; do \
+      dir=$(dirname "$f"); \
+      base=$(basename "$f"); \
+      # Create UPPERCASE.pas link (e.g. atari.pas -> ATARI.pas)
+      upper_base=$(echo "$base" | sed 's/\.pas$//' | tr '[:lower:]' '[:upper:]'); \
+      ln -s "$base" "$dir/$upper_base.pas" 2>/dev/null || true; \
+    done
 
 COPY script.sh /script.sh
 RUN chmod +x /script.sh
