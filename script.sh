@@ -27,6 +27,7 @@ mp "${FILE_NAME}.pas" \
    -o
 
 # 2. Run Mad Assembler
+# Added -i:/opt/MadPascal/blibs so MADS can find included .asm files
 mads "${FILE_NAME}.a65" \
      -x \
      -i:/opt/MadPascal/base \
