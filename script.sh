@@ -4,17 +4,12 @@ set -e
 FILE_NAME=$1
 MODE=$2
 
-# =========================================================
-# MODE 0: Interactive / Debug
-# =========================================================
+# Interactive Mode Check
 if [ -z "$FILE_NAME" ] || [ "$MODE" == "0" ]; then
     echo "--- Container is running in interactive mode ---"
     exec tail -f /dev/null
 fi
 
-# =========================================================
-# MODE 1: Compile
-# =========================================================
 cd /code
 
 if [ ! -f "${FILE_NAME}.pas" ]; then
@@ -25,7 +20,7 @@ fi
 echo "--- Compiling ${FILE_NAME}.pas ---"
 
 # 1. Run Mad Pascal
-# WE ADDED: -ipath:/opt/MadPascal/blibs so it can find b_crt
+# Note: The Dockerfile now ensures casing doesn't matter for these libraries
 mp "${FILE_NAME}.pas" \
    -ipath:/code \
    -ipath:/opt/MadPascal/base \
