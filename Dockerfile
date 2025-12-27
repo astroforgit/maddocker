@@ -4,7 +4,6 @@
 FROM debian:stable-slim AS builder
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Install dependencies
 RUN apt-get update && apt-get install -y fpc git ca-certificates && rm -rf /var/lib/apt/lists/*
 WORKDIR /build
 
@@ -21,17 +20,15 @@ RUN git clone https://github.com/tebe6502/Mad-Pascal.git && \
     cp -r ../base /dist/opt/MadPascal/ && \
     cp -r ../lib /dist/opt/MadPascal/
 
-# 3. Blibs (Robust Copy)
+# 3. Blibs
 RUN git clone https://gitlab.com/bocianu/blibs.git && \
     mkdir -p /dist/opt/MadPascal/blibs && \
-    # Try copying from nested folder first, fall back to root
     cp -r blibs/blibs/* /dist/opt/MadPascal/blibs/ 2>/dev/null || cp -r blibs/* /dist/opt/MadPascal/blibs/
 
 # ==========================================
 # STAGE 2: Runtime
 # ==========================================
 FROM debian:stable-slim
-# Install standard tools
 RUN apt-get update && apt-get install -y --no-install-recommends bash findutils coreutils && rm -rf /var/lib/apt/lists/*
 
 COPY --from=builder /dist/bin/mp /usr/bin/mp
@@ -41,14 +38,21 @@ COPY --from=builder /dist/opt/MadPascal /opt/MadPascal
 ENV MP_DIR="/opt/MadPascal"
 ENV PATH="$MP_DIR:$PATH"
 
-# --- THE FIX: CREATE UPPERCASE SYMLINKS ---
-# This ensures 'uses ATARI' finds 'atari.pas'
-RUN find /opt/MadPascal -name "*.pas" | while read f; do \
+# --- THE FIX: CREATE UPPERCASE SYMLINKS FOR ALL EXTENSIONS ---
+# This ensures mads can find 'system.a65' even if it asks for 'SYSTEM.A65'
+RUN find /opt/MadPascal -type f \( -name "*.pas" -o -name "*.a65" -o -name "*.asm" -o -name "*.inc" -o -name "*.mac" \) | while read f; do \
       dir=$(dirname "$f"); \
       base=$(basename "$f"); \
-      # Create UPPERCASE.pas link (e.g. atari.pas -> ATARI.pas)
-      upper_base=$(echo "$base" | sed 's/\.pas$//' | tr '[:lower:]' '[:upper:]'); \
-      ln -s "$base" "$dir/$upper_base.pas" 2>/dev/null || true; \
+      ext="${base##*.}"; \
+      filename="${base%.*}"; \
+      \
+      # 1. Create UPPERCASE.EXT (e.g. system.a65 -> SYSTEM.A65) \
+      upper_base=$(echo "$base" | tr '[:lower:]' '[:upper:]'); \
+      ln -s "$base" "$dir/$upper_base" 2>/dev/null || true; \
+      \
+      # 2. Create UPPERCASE.lower (e.g. system.a65 -> SYSTEM.a65) \
+      upper_name=$(echo "$filename" | tr '[:lower:]' '[:upper:]'); \
+      ln -s "$base" "$dir/$upper_name.$ext" 2>/dev/null || true; \
     done
 
 COPY script.sh /script.sh
